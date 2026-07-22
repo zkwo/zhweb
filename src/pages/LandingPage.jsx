@@ -1,9 +1,9 @@
-const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink } from 'lucide-react';
 
 export default function LandingPage() {
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [totalExec, setTotalExec] = useState(0);
   const [scripts, setScripts] = useState([]);
   const [messages, setMessages] = useState([]);
