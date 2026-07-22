@@ -1,3 +1,4 @@
+const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink } from 'lucide-react';
