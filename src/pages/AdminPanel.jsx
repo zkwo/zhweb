@@ -8,7 +8,19 @@ export default function AdminPanel({ onBack }) {
   const [scripts, setScripts] = useState([]);
   const [messages, setMessages] = useState([]);
 
-  // Form State
+  // Site Settings state
+  const [settings, setSettings] = useState({
+    discord_show: true,
+    discord_link: '',
+    devtool_show: true,
+    devtool_name: '',
+    devtool_link: '',
+    donate_show: true,
+    donate_name: '',
+    donate_link: ''
+  });
+
+  // Script Form State
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [placeId, setPlaceId] = useState('');
@@ -17,7 +29,7 @@ export default function AdminPanel({ onBack }) {
   const [version, setVersion] = useState('v1.0.0');
   const [description, setDescription] = useState('');
 
-  const ADMIN_PASS = 'Robloxer1029384756';
+  const ADMIN_PASS = '087714745440';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -37,6 +49,9 @@ export default function AdminPanel({ onBack }) {
     const { data: stats } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
     if (stats) setGlobalExec(stats.total_executions);
 
+    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+    if (sets) setSettings(sets);
+
     const { data: scriptList } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
     if (scriptList) setScripts(scriptList);
 
@@ -47,6 +62,11 @@ export default function AdminPanel({ onBack }) {
   const saveGlobalExec = async () => {
     await supabase.from('global_stats').update({ total_executions: parseInt(globalExec) }).eq('id', 1);
     alert('Global Executions disimpan!');
+  };
+
+  const saveSiteSettings = async () => {
+    await supabase.from('site_settings').update(settings).eq('id', 1);
+    alert('Pengaturan tombol & link berhasil disimpan!');
   };
 
   const handleSubmitScript = async (e) => {
@@ -125,7 +145,7 @@ export default function AdminPanel({ onBack }) {
           <button onClick={handleLogin} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">
             MASUK PANEL
           </button>
-          <button onClick={onBack} className="mt-4 text-xs font-mono text-zinc-400 hover:underline">
+          <button onClick={onBack} className="mt-4 text-xs font-mono text-zinc-400 hover:underline block mx-auto">
             ← Kembali ke Website
           </button>
         </div>
@@ -139,7 +159,7 @@ export default function AdminPanel({ onBack }) {
         <div className="flex justify-between items-center border-b border-white/10 pb-6">
           <div>
             <h1 className="font-orbitron font-bold text-xl text-white">ZHENS HUB — ADMIN PANEL</h1>
-            <p className="font-mono text-xs text-zinc-400">Terhubung secara realtime dengan Supabase Database</p>
+            <p className="font-mono text-xs text-zinc-400">Pengaturan Website & Dynamic Links</p>
           </div>
           <button onClick={onBack} className="px-5 py-2 rounded-full border border-white/20 text-xs font-mono text-zinc-300 hover:bg-white hover:text-black transition">
             KELUAR
@@ -153,6 +173,55 @@ export default function AdminPanel({ onBack }) {
             <input type="number" value={globalExec} onChange={(e) => setGlobalExec(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white font-mono" />
             <button onClick={saveGlobalExec} className="px-6 py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN</button>
           </div>
+        </div>
+
+        {/* Site Settings (Discord, Dev Tools, Saweria) */}
+        <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
+          <h2 className="font-orbitron text-sm font-bold text-white mb-2">2. PENGATURAN TOMBOL & REDIRECT LINK</h2>
+          
+          {/* Discord */}
+          <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-xs text-white">Tombol Discord</span>
+              <label className="flex items-center gap-2 text-xs font-mono">
+                <input type="checkbox" checked={settings.discord_show} onChange={(e) => setSettings({ ...settings, discord_show: e.target.checked })} />
+                Tampilkan
+              </label>
+            </div>
+            <input type="text" value={settings.discord_link} onChange={(e) => setSettings({ ...settings, discord_link: e.target.value })} placeholder="Link Invite Discord" className="w-full bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white font-mono" />
+          </div>
+
+          {/* Dev Tools */}
+          <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-xs text-white">Tombol Developer Tools</span>
+              <label className="flex items-center gap-2 text-xs font-mono">
+                <input type="checkbox" checked={settings.devtool_show} onChange={(e) => setSettings({ ...settings, devtool_show: e.target.checked })} />
+                Tampilkan
+              </label>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" value={settings.devtool_name} onChange={(e) => setSettings({ ...settings, devtool_name: e.target.value })} placeholder="Nama Tombol" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white" />
+              <input type="text" value={settings.devtool_link} onChange={(e) => setSettings({ ...settings, devtool_link: e.target.value })} placeholder="Link Redirect" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white font-mono" />
+            </div>
+          </div>
+
+          {/* Saweria */}
+          <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-xs text-white">Tombol Support / Donasi</span>
+              <label className="flex items-center gap-2 text-xs font-mono">
+                <input type="checkbox" checked={settings.donate_show} onChange={(e) => setSettings({ ...settings, donate_show: e.target.checked })} />
+                Tampilkan
+              </label>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" value={settings.donate_name} onChange={(e) => setSettings({ ...settings, donate_name: e.target.value })} placeholder="Nama Tombol" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white" />
+              <input type="text" value={settings.donate_link} onChange={(e) => setSettings({ ...settings, donate_link: e.target.value })} placeholder="Link Redirect" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white font-mono" />
+            </div>
+          </div>
+
+          <button onClick={saveSiteSettings} className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN PENGATURAN LINK</button>
         </div>
 
         {/* Script Form */}
@@ -173,7 +242,7 @@ export default function AdminPanel({ onBack }) {
               <input type="text" placeholder="Deskripsi" value={description} onChange={(e) => setDescription(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN</button>
+              <button type="submit" className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN SCRIPT</button>
               {editingId && <button type="button" onClick={resetForm} className="px-6 py-3 bg-zinc-800 text-white font-orbitron font-bold text-xs rounded-xl">BATAL</button>}
             </div>
           </form>
