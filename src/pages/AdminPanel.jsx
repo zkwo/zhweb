@@ -10,6 +10,7 @@ export default function AdminPanel({ onBack }) {
 
   // Site Settings state
   const [settings, setSettings] = useState({
+    id: 1,
     discord_show: true,
     discord_link: '',
     devtool_show: true,
@@ -29,7 +30,7 @@ export default function AdminPanel({ onBack }) {
   const [version, setVersion] = useState('v1.0.0');
   const [description, setDescription] = useState('');
 
-  const ADMIN_PASS = '087714745440';
+  const ADMIN_PASS = 'Robloxer1029384756';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -49,7 +50,7 @@ export default function AdminPanel({ onBack }) {
     const { data: stats } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
     if (stats) setGlobalExec(stats.total_executions);
 
-    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
     if (sets) setSettings(sets);
 
     const { data: scriptList } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
@@ -60,13 +61,29 @@ export default function AdminPanel({ onBack }) {
   }
 
   const saveGlobalExec = async () => {
-    await supabase.from('global_stats').update({ total_executions: parseInt(globalExec) }).eq('id', 1);
-    alert('Global Executions disimpan!');
+    await supabase.from('global_stats').upsert({ id: 1, total_executions: parseInt(globalExec) });
+    alert('Global Executions berhasil disimpan!');
   };
 
   const saveSiteSettings = async () => {
-    await supabase.from('site_settings').update(settings).eq('id', 1);
-    alert('Pengaturan tombol & link berhasil disimpan!');
+    const { error } = await supabase.from('site_settings').upsert({
+      id: 1,
+      discord_show: settings.discord_show,
+      discord_link: settings.discord_link,
+      devtool_show: settings.devtool_show,
+      devtool_name: settings.devtool_name,
+      devtool_link: settings.devtool_link,
+      donate_show: settings.donate_show,
+      donate_name: settings.donate_name,
+      donate_link: settings.donate_link
+    });
+
+    if (!error) {
+      alert('Pengaturan tombol & link berhasil disimpan!');
+      loadAdminData();
+    } else {
+      alert('Gagal menyimpan: ' + error.message);
+    }
   };
 
   const handleSubmitScript = async (e) => {
@@ -183,8 +200,8 @@ export default function AdminPanel({ onBack }) {
           <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-bold text-xs text-white">Tombol Discord</span>
-              <label className="flex items-center gap-2 text-xs font-mono">
-                <input type="checkbox" checked={settings.discord_show} onChange={(e) => setSettings({ ...settings, discord_show: e.target.checked })} />
+              <label className="flex items-center gap-2 text-xs font-mono cursor-pointer">
+                <input type="checkbox" checked={settings.discord_show} onChange={(e) => setSettings({ ...settings, discord_show: e.target.checked })} className="w-4 h-4 accent-emerald-500" />
                 Tampilkan
               </label>
             </div>
@@ -195,8 +212,8 @@ export default function AdminPanel({ onBack }) {
           <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-bold text-xs text-white">Tombol Developer Tools</span>
-              <label className="flex items-center gap-2 text-xs font-mono">
-                <input type="checkbox" checked={settings.devtool_show} onChange={(e) => setSettings({ ...settings, devtool_show: e.target.checked })} />
+              <label className="flex items-center gap-2 text-xs font-mono cursor-pointer">
+                <input type="checkbox" checked={settings.devtool_show} onChange={(e) => setSettings({ ...settings, devtool_show: e.target.checked })} className="w-4 h-4 accent-emerald-500" />
                 Tampilkan
               </label>
             </div>
@@ -210,8 +227,8 @@ export default function AdminPanel({ onBack }) {
           <div className="p-4 bg-zinc-950 border border-white/10 rounded-xl space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-bold text-xs text-white">Tombol Support / Donasi</span>
-              <label className="flex items-center gap-2 text-xs font-mono">
-                <input type="checkbox" checked={settings.donate_show} onChange={(e) => setSettings({ ...settings, donate_show: e.target.checked })} />
+              <label className="flex items-center gap-2 text-xs font-mono cursor-pointer">
+                <input type="checkbox" checked={settings.donate_show} onChange={(e) => setSettings({ ...settings, donate_show: e.target.checked })} className="w-4 h-4 accent-emerald-500" />
                 Tampilkan
               </label>
             </div>
@@ -221,7 +238,7 @@ export default function AdminPanel({ onBack }) {
             </div>
           </div>
 
-          <button onClick={saveSiteSettings} className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN PENGATURAN LINK</button>
+          <button onClick={saveSiteSettings} className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl hover:bg-emerald-400 transition">SIMPAN PENGATURAN LINK</button>
         </div>
 
         {/* Script Form */}
@@ -242,7 +259,7 @@ export default function AdminPanel({ onBack }) {
               <input type="text" placeholder="Deskripsi" value={description} onChange={(e) => setDescription(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
             </div>
             <div className="flex gap-3">
-              <button type="submit" className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl">SIMPAN SCRIPT</button>
+              <button type="submit" className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl hover:bg-emerald-400 transition">SIMPAN SCRIPT</button>
               {editingId && <button type="button" onClick={resetForm} className="px-6 py-3 bg-zinc-800 text-white font-orbitron font-bold text-xs rounded-xl">BATAL</button>}
             </div>
           </form>
@@ -294,4 +311,4 @@ export default function AdminPanel({ onBack }) {
       </div>
     </div>
   );
-}
+  }
