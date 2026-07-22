@@ -12,6 +12,7 @@ export default function AdminPanel({ onBack }) {
   const [settings, setSettings] = useState({
     id: 1,
     discord_show: true,
+    discord_name: 'Discord',
     discord_link: '',
     devtool_show: true,
     devtool_name: '',
@@ -30,7 +31,7 @@ export default function AdminPanel({ onBack }) {
   const [version, setVersion] = useState('v1.0.0');
   const [description, setDescription] = useState('');
 
-  const ADMIN_PASS = 'Robloxer1029384756';
+  const ADMIN_PASS = '087714745440';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -69,6 +70,7 @@ export default function AdminPanel({ onBack }) {
     const { error } = await supabase.from('site_settings').upsert({
       id: 1,
       discord_show: settings.discord_show,
+      discord_name: settings.discord_name,
       discord_link: settings.discord_link,
       devtool_show: settings.devtool_show,
       devtool_name: settings.devtool_name,
@@ -192,7 +194,7 @@ export default function AdminPanel({ onBack }) {
           </div>
         </div>
 
-        {/* Site Settings (Discord, Dev Tools, Saweria) */}
+        {/* Site Settings */}
         <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
           <h2 className="font-orbitron text-sm font-bold text-white mb-2">2. PENGATURAN TOMBOL & REDIRECT LINK</h2>
           
@@ -205,7 +207,10 @@ export default function AdminPanel({ onBack }) {
                 Tampilkan
               </label>
             </div>
-            <input type="text" value={settings.discord_link} onChange={(e) => setSettings({ ...settings, discord_link: e.target.value })} placeholder="Link Invite Discord" className="w-full bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white font-mono" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" value={settings.discord_name} onChange={(e) => setSettings({ ...settings, discord_name: e.target.value })} placeholder="Nama Tombol" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white" />
+              <input type="text" value={settings.discord_link} onChange={(e) => setSettings({ ...settings, discord_link: e.target.value })} placeholder="Link Invite Discord" className="bg-zinc-900 border border-white/10 rounded p-2 text-xs text-white font-mono" />
+            </div>
           </div>
 
           {/* Dev Tools */}
@@ -311,4 +316,4 @@ export default function AdminPanel({ onBack }) {
       </div>
     </div>
   );
-  }
+      }
