@@ -5,6 +5,7 @@ export default function LandingPage({ onOpenAdmin }) {
   const [totalExec, setTotalExec] = useState(0);
   const [scripts, setScripts] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [thumbnails, setThumbnails] = useState({});
   const [fabOpen, setFabOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'send' | 'thread' | null
   
@@ -12,38 +13,18 @@ export default function LandingPage({ onOpenAdmin }) {
   const [msgContent, setMsgContent] = useState('');
   const [copyStatus, setCopyStatus] = useState('Salin Script');
 
-  const [thumbnails, setThumbnails] = useState({});
-
-useEffect(() => {
-  if (scripts.length > 0) {
-    fetchThumbnails();
-  }
-}, [scripts]);
-
-const fetchThumbnails = async () => {
-  const placeIds = scripts.map(s => s.place_id).filter(Boolean);
-  if (placeIds.length === 0) return;
-
-  try {
-    const res = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
-    const data = await res.json();
-    if (data && data.data) {
-      const map = {};
-      data.data.forEach(item => {
-        map[item.targetId] = item.imageUrl;
-      });
-      setThumbnails(map);
-    }
-  } catch (e) {
-    console.error('Thumbnail fetch error:', e);
-  }
-};
-
   const LS_URL = 'loadstring(game:HttpGet("https://zhenshubuniversal.vercel.app"))()';
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Fetch thumbnail otomatis dari RoProxy setelah data script dapat
+  useEffect(() => {
+    if (scripts.length > 0) {
+      fetchThumbnails();
+    }
+  }, [scripts]);
 
   async function fetchData() {
     // Fetch Total Executions
@@ -58,6 +39,25 @@ const fetchThumbnails = async () => {
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (msgData) setMessages(msgData);
   }
+
+  const fetchThumbnails = async () => {
+    const placeIds = scripts.map(s => s.place_id).filter(Boolean);
+    if (placeIds.length === 0) return;
+
+    try {
+      const res = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
+      const data = await res.json();
+      if (data && data.data) {
+        const map = {};
+        data.data.forEach(item => {
+          map[item.targetId] = item.imageUrl;
+        });
+        setThumbnails(map);
+      }
+    } catch (e) {
+      console.error('Thumbnail fetch error:', e);
+    }
+  };
 
   const copyMain = () => {
     navigator.clipboard.writeText(LS_URL).then(() => {
@@ -148,7 +148,7 @@ const fetchThumbnails = async () => {
           </div>
         </section>
 
-        {/* Script Cards */}
+        {/* Script Cards Collection */}
         <section className="mt-4 mb-16">
           <div className="flex items-center gap-4 mb-8">
             <h2 className="font-zendots text-2xl uppercase chrome-text whitespace-nowrap">Script Collection</h2>
@@ -160,8 +160,13 @@ const fetchThumbnails = async () => {
               <div key={s.id} className="bg-zinc-900/40 border border-white/10 hover:border-white/25 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-14 h-14 rounded-xl border border-white/10 overflow-hidden bg-black/40">
-                      <img src={`https://rbx-img.roproxy.com/place-icon?placeId=${s.place_id}&size=150x150&format=Png`} onError={(e)=>{e.target.src="/logo.png"}} className="w-full h-full object-cover" alt={s.title} />
+                    <div className="w-14 h-14 rounded-xl border border-white/10 overflow-hidden bg-black/40 flex-shrink-0">
+                      <img 
+                        src={thumbnails[s.place_id] || "assets/logo.png"} 
+                        onError={(e) => { e.target.src = "assets/logo.png"; }}
+                        className="w-full h-full object-cover" 
+                        alt={s.title} 
+                      />
                     </div>
                     <span className={`font-orbitron text-[10px] font-bold px-3 py-1 rounded-full border uppercase ${s.status === 'DISABLED' ? 'bg-black/50 text-zinc-400 border-white/10' : 'bg-white/10 text-white border-white/20'}`}>
                       {s.status}
@@ -172,56 +177,77 @@ const fetchThumbnails = async () => {
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-dashed border-white/10 font-mono text-xs">
                   <span className="text-white">⚡ {formatCount(s.executions)} Executions</span>
-                  <span className="text-zinc-500">{s.version}</span>
+                  <span className="text-zinc-500">{s.version || 'v1.0.0'}</span>
                 </div>
               </div>
             ))}
           </div>
         </section>
+
+        {/* Developer Tools & Support */}
+        <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
+          <div className="w-full text-center">
+            <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Tools untuk developer</p>
+            <a href="https://luraphdeobfvictoria-6zfp.vercel.app/" target="_blank" rel="noreferrer" className="w-full max-w-xs inline-flex justify-center items-center px-6 py-3.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
+              🔓 Victoria Obfuscate
+            </a>
+          </div>
+          <div className="w-full text-center">
+            <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Suka scriptnya? Support pengembang 🙏</p>
+            <a href="https://saweria.co/sazaraaa" target="_blank" rel="noreferrer" className="w-full max-w-xs inline-flex justify-center items-center px-6 py-3.5 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
+              ☕ Saweria — sazaraaa
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Floating Action Menu & Modals */}
       <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
         {fabOpen && (
           <div className="flex flex-col gap-2 transition-all duration-300">
-            <button onClick={() => setActiveModal('thread')} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition text-right">
+            <button onClick={() => { setActiveModal('thread'); setFabOpen(false); }} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition text-right">
               💬 Public Threads
             </button>
-            <button onClick={() => setActiveModal('send')} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition text-right">
+            <button onClick={() => { setActiveModal('send'); setFabOpen(false); }} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition text-right">
               ✉️ Kirim Pesan
             </button>
           </div>
         )}
-        <button onClick={() => setFabOpen(!fabOpen)} className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-105 transition">
-          ⚙️
+        <button onClick={() => setFabOpen(!fabOpen)} className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path></svg>
         </button>
       </div>
 
+      {/* Modal Backdrop */}
+      {activeModal && (
+        <div onClick={() => setActiveModal(null)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"></div>
+      )}
+
       {/* Modal Send */}
       {activeModal === 'send' && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 backdrop-blur-2xl shadow-2xl">
-            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-              <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
-              <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold">✕</button>
-            </div>
-            <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
-            <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none resize-none"></textarea>
-            <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 z-50 backdrop-blur-2xl shadow-2xl">
+          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
+            <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
+            <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold">✕</button>
           </div>
+          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none focus:border-white/40" />
+          <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none focus:border-white/40 resize-none"></textarea>
+          <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
         </div>
       )}
 
       {/* Modal Threads */}
       {activeModal === 'thread' && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 backdrop-blur-2xl shadow-2xl max-h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-              <h3 className="font-orbitron font-bold text-sm text-white">PUBLIC THREADS</h3>
-              <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold">✕</button>
-            </div>
-            <div className="overflow-y-auto space-y-3 flex-1 font-sans text-sm">
-              {messages.map((m) => (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 z-50 backdrop-blur-2xl shadow-2xl max-h-[80vh] flex flex-col">
+          <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
+            <h3 className="font-orbitron font-bold text-sm text-white">PUBLIC THREADS</h3>
+            <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold">✕</button>
+          </div>
+          <div className="overflow-y-auto space-y-3 flex-1 pr-1 font-sans text-sm">
+            {messages.length === 0 ? (
+              <div className="text-center text-zinc-500 py-4 font-mono text-xs">Belum ada percakapan.</div>
+            ) : (
+              messages.map((m) => (
                 <div key={m.id} className="bg-white/5 border border-white/10 rounded-xl p-3.5 space-y-1.5">
                   <div className="flex justify-between items-center text-xs font-mono text-zinc-400">
                     <span className="text-white font-bold">👤 {m.sender_name}</span>
@@ -234,11 +260,15 @@ const fetchThumbnails = async () => {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              ))
+            )}
           </div>
         </div>
       )}
+
+      <footer className="py-8 text-center font-mono text-xs text-zinc-500 border-t border-white/10 mt-12 bg-black/40">
+        <div><span class="text-white font-bold">ZH</span> - ZHENSHUB © 2026</div>
+      </footer>
     </div>
   );
 }
