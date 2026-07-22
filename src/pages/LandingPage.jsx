@@ -3,20 +3,22 @@ import { supabase } from '../supabaseClient';
 import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink } from 'lucide-react';
 
 export default function LandingPage() {
-  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [totalExec, setTotalExec] = useState(0);
   const [scripts, setScripts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [thumbnails, setThumbnails] = useState({});
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+  
   const [settings, setSettings] = useState({
-    discord_show: true,
-    discord_link: 'https://discord.gg/HB9gqZGMnT',
-    devtool_show: true,
-    devtool_name: '🔓 Victoria Obfuscate',
-    devtool_link: 'https://luraphdeobfvictoria-6zfp.vercel.app/',
-    donate_show: true,
-    donate_name: '☕ Saweria — sazaraaa',
-    donate_link: 'https://saweria.co/sazaraaa'
+    discord_show: false,
+    discord_name: 'Join For Us',
+    discord_link: 'https://comingsoon&have&a&nice&day',
+    devtool_show: false,
+    devtool_name: 'Community',
+    devtool_link: 'https://comingsoon&have&a&nice&day',
+    donate_show: false,
+    donate_name: 'Donation',
+    donate_link: 'https://comingsoon&have&a&nice&day'
   });
 
   const [fabOpen, setFabOpen] = useState(false);
@@ -36,36 +38,36 @@ export default function LandingPage() {
   }, [scripts]);
 
   async function fetchData() {
-  // 1. Fetch Total Executions
-  const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
-  if (statsData) setTotalExec(statsData.total_executions);
+    // 1. Fetch Total Executions
+    const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
+    if (statsData) setTotalExec(statsData.total_executions);
 
-  // 2. Fetch Site Settings (Discord, Dev Tools, Donation)
-  const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
-  if (sets) {
-    setSettings({
-      discord_show: Boolean(sets.discord_show),
-      discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
-      devtool_show: Boolean(sets.devtool_show),
-      devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
-      devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
-      donate_show: Boolean(sets.donate_show),
-      donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
-      donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
-    });
+    // 2. Fetch Site Settings
+    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
+    if (sets) {
+      setSettings({
+        discord_show: Boolean(sets.discord_show),
+        discord_name: sets.discord_name || 'Discord',
+        discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
+        devtool_show: Boolean(sets.devtool_show),
+        devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
+        devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
+        donate_show: Boolean(sets.donate_show),
+        donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
+        donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
+      });
+    }
+    setIsSettingsLoaded(true);
+
+    // 3. Fetch Scripts Collection
+    const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
+    if (scriptsData) setScripts(scriptsData);
+
+    // 4. Fetch Public Threads Messages
+    const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+    if (msgData) setMessages(msgData);
   }
-  
-  // Tandai bahwa pembacaan setting dari Supabase sudah selesai
-  setIsSettingsLoaded(true);
 
-  // 3. Fetch Scripts Collection
-  const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
-  if (scriptsData) setScripts(scriptsData);
-
-  // 4. Fetch Public Threads Messages
-  const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-  if (msgData) setMessages(msgData);
-}
   const fetchThumbnails = async () => {
     const placeIds = scripts.map(s => s.place_id).filter(Boolean);
     if (placeIds.length === 0) return;
@@ -88,17 +90,9 @@ export default function LandingPage() {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
 
-    // Increment global executions
+    // Increment total executions hanya saat tombol Salin Script diklik
     await supabase.rpc('increment_executions', { amount: 1 });
     setTotalExec(prev => prev + 1);
-  };
-
-  const handleCardClick = async (script) => {
-    await supabase.rpc('increment_executions', { amount: 1 });
-    setTotalExec(prev => prev + 1);
-    
-    await supabase.from('scripts').update({ executions: (script.executions || 0) + 1 }).eq('id', script.id);
-    fetchData();
   };
 
   const handleSendMessage = async () => {
@@ -138,7 +132,7 @@ export default function LandingPage() {
             {isSettingsLoaded && settings.discord_show && (
               <a href={settings.discord_link} target="_blank" rel="noreferrer" className="cling-effect px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition backdrop-blur-md flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-indigo-400" />
-                Discord
+                {settings.discord_name}
               </a>
             )}
           </div>
@@ -194,8 +188,7 @@ export default function LandingPage() {
             {scripts.map((s) => (
               <div 
                 key={s.id} 
-                onClick={() => handleCardClick(s)}
-                className="cling-effect cursor-pointer bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between group"
+                className="cling-effect bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -316,4 +309,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-        }
+                              }
