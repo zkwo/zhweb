@@ -35,19 +35,30 @@ export default function LandingPage() {
   }, [scripts]);
 
   async function fetchData() {
-    // Fetch Total Executions
+    // 1. Fetch Total Executions
     const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
     if (statsData) setTotalExec(statsData.total_executions);
 
-    // Fetch Site Settings
-    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
-    if (sets) setSettings(sets);
+    // 2. Fetch Site Settings (Discord, Dev Tools, Donation)
+    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
+    if (sets) {
+      setSettings({
+        discord_show: Boolean(sets.discord_show),
+        discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
+        devtool_show: Boolean(sets.devtool_show),
+        devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
+        devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
+        donate_show: Boolean(sets.donate_show),
+        donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
+        donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
+      });
+    }
 
-    // Fetch Scripts
+    // 3. Fetch Scripts Collection
     const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
     if (scriptsData) setScripts(scriptsData);
 
-    // Fetch Messages
+    // 4. Fetch Public Threads Messages
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (msgData) setMessages(msgData);
   }
@@ -74,17 +85,15 @@ export default function LandingPage() {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
 
-    // Auto increment total executions di Supabase
+    // Increment global executions
     await supabase.rpc('increment_executions', { amount: 1 });
     setTotalExec(prev => prev + 1);
   };
 
   const handleCardClick = async (script) => {
-    // Auto increment executions saat card diklik/dipilih
     await supabase.rpc('increment_executions', { amount: 1 });
     setTotalExec(prev => prev + 1);
     
-    // Increment executions spesifik di card script
     await supabase.from('scripts').update({ executions: (script.executions || 0) + 1 }).eq('id', script.id);
     fetchData();
   };
@@ -149,7 +158,7 @@ export default function LandingPage() {
             Premium Roblox scripts with Advanced Features
           </p>
 
-          {/* Loadstring Terminal */}
+          {/* Loadstring Terminal Box */}
           <div className="max-w-3xl mx-auto mb-16 rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl overflow-hidden shadow-2xl text-left">
             <div className="bg-black/40 px-6 py-3.5 border-b border-white/10 flex items-center justify-between">
               <div className="flex gap-2">
@@ -171,7 +180,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Script Cards Collection */}
+        {/* Script Collection Grid */}
         <section className="mt-4 mb-16">
           <div className="flex items-center gap-4 mb-8">
             <h2 className="font-zendots text-2xl uppercase chrome-text whitespace-nowrap">Script Collection</h2>
@@ -183,7 +192,7 @@ export default function LandingPage() {
               <div 
                 key={s.id} 
                 onClick={() => handleCardClick(s)}
-                className="cling-effect cursor-pointer bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between"
+                className="cling-effect cursor-pointer bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
@@ -214,29 +223,31 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Dynamic Dev Tools & Support */}
-        <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
-          {settings.devtool_show && (
-            <div className="w-full text-center">
-              <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Tools untuk developer</p>
-              <a href={settings.devtool_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
-                {settings.devtool_name} <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          )}
+        {/* Dynamic Dev Tools & Support Section */}
+        {(settings.devtool_show || settings.donate_show) && (
+          <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
+            {settings.devtool_show && (
+              <div className="w-full text-center">
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Tools untuk developer</p>
+                <a href={settings.devtool_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
+                  {settings.devtool_name} <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
 
-          {settings.donate_show && (
-            <div className="w-full text-center">
-              <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Suka scriptnya? Support pengembang 🙏</p>
-              <a href={settings.donate_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
-                {settings.donate_name} <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          )}
-        </div>
+            {settings.donate_show && (
+              <div className="w-full text-center">
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Suka scriptnya? Support pengembang 🙏</p>
+                <a href={settings.donate_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
+                  {settings.donate_name} <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Floating Action Menu with Lucide Icons */}
+      {/* Floating Action Menu */}
       <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
         {fabOpen && (
           <div className="flex flex-col gap-2 transition-all duration-300">
@@ -302,4 +313,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-}
+        }
