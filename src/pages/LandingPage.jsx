@@ -36,34 +36,36 @@ export default function LandingPage() {
   }, [scripts]);
 
   async function fetchData() {
-    // 1. Fetch Total Executions
-    const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
-    if (statsData) setTotalExec(statsData.total_executions);
+  // 1. Fetch Total Executions
+  const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
+  if (statsData) setTotalExec(statsData.total_executions);
 
-    // 2. Fetch Site Settings (Discord, Dev Tools, Donation)
-    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
-    if (sets) {
-      setSettings({
-        discord_show: Boolean(sets.discord_show),
-        discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
-        devtool_show: Boolean(sets.devtool_show),
-        devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
-        devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
-        donate_show: Boolean(sets.donate_show),
-        donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
-        donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
-      });
-    }
-
-    // 3. Fetch Scripts Collection
-    const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
-    if (scriptsData) setScripts(scriptsData);
-
-    // 4. Fetch Public Threads Messages
-    const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    if (msgData) setMessages(msgData);
+  // 2. Fetch Site Settings (Discord, Dev Tools, Donation)
+  const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
+  if (sets) {
+    setSettings({
+      discord_show: Boolean(sets.discord_show),
+      discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
+      devtool_show: Boolean(sets.devtool_show),
+      devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
+      devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
+      donate_show: Boolean(sets.donate_show),
+      donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
+      donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
+    });
   }
+  
+  // Tandai bahwa pembacaan setting dari Supabase sudah selesai
+  setIsSettingsLoaded(true);
 
+  // 3. Fetch Scripts Collection
+  const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
+  if (scriptsData) setScripts(scriptsData);
+
+  // 4. Fetch Public Threads Messages
+  const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+  if (msgData) setMessages(msgData);
+}
   const fetchThumbnails = async () => {
     const placeIds = scripts.map(s => s.place_id).filter(Boolean);
     if (placeIds.length === 0) return;
@@ -133,7 +135,7 @@ export default function LandingPage() {
             <span className="text-white animate-pulse">•</span> ZH
           </div>
           <div className="flex flex-wrap justify-center gap-3 font-mono text-xs">
-            {settings.discord_show && (
+            {isSettingsLoaded && settings.discord_show && (
               <a href={settings.discord_link} target="_blank" rel="noreferrer" className="cling-effect px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition backdrop-blur-md flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-indigo-400" />
                 Discord
@@ -225,7 +227,7 @@ export default function LandingPage() {
         </section>
 
         {/* Dynamic Dev Tools & Support Section */}
-        {(settings.devtool_show || settings.donate_show) && (
+        {isSettingsLoaded && (settings.devtool_show || settings.donate_show) && (
           <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
             {settings.devtool_show && (
               <div className="w-full text-center">
