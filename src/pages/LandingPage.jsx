@@ -12,6 +12,33 @@ export default function LandingPage({ onOpenAdmin }) {
   const [msgContent, setMsgContent] = useState('');
   const [copyStatus, setCopyStatus] = useState('Salin Script');
 
+  const [thumbnails, setThumbnails] = useState({});
+
+useEffect(() => {
+  if (scripts.length > 0) {
+    fetchThumbnails();
+  }
+}, [scripts]);
+
+const fetchThumbnails = async () => {
+  const placeIds = scripts.map(s => s.place_id).filter(Boolean);
+  if (placeIds.length === 0) return;
+
+  try {
+    const res = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
+    const data = await res.json();
+    if (data && data.data) {
+      const map = {};
+      data.data.forEach(item => {
+        map[item.targetId] = item.imageUrl;
+      });
+      setThumbnails(map);
+    }
+  } catch (e) {
+    console.error('Thumbnail fetch error:', e);
+  }
+};
+
   const LS_URL = 'loadstring(game:HttpGet("https://zhenshubuniversal.vercel.app"))()';
 
   useEffect(() => {
