@@ -33,7 +33,7 @@ export default function AdminPanel({ onBack }) {
   const [version, setVersion] = useState('v1.0.0');
   const [description, setDescription] = useState('');
 
-  const ADMIN_PASS = 'Robloxer1029384756';
+  const ADMIN_PASS = '089527732022';
 
   useEffect(() => {
     if (isAuthenticated) {
