@@ -307,7 +307,7 @@ export default function LandingPage() {
             <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
             <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold"><X className="w-5 h-5" /></button>
           </div>
-          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
+          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (No Name = Anonymous)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
           <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none resize-none"></textarea>
           <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
         </div>
@@ -331,7 +331,7 @@ export default function LandingPage() {
                   <p className="text-xs text-zinc-200 leading-relaxed">{m.content}</p>
                   {m.admin_reply && (
                     <div className="bg-white/10 border-l-2 border-white pl-2.5 py-1.5 mt-2 rounded-r-lg">
-                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👑 Admin Reply</span>
+                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👤 Admin</span>
                       <span className="text-xs text-zinc-300">{m.admin_reply}</span>
                     </div>
                   )}
