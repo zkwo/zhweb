@@ -7,6 +7,7 @@ export default function LandingPage() {
   const [scripts, setScripts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [thumbnails, setThumbnails] = useState({});
+  const [developers, setDevelopers] = useState({});
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   
   const [settings, setSettings] = useState({
@@ -34,7 +35,7 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    if (scripts.length > 0) fetchThumbnails();
+    if (scripts.length > 0) fetchRobloxGameData();
   }, [scripts]);
 
   async function fetchData() {
@@ -47,7 +48,7 @@ export default function LandingPage() {
     if (sets) {
       setSettings({
         discord_show: Boolean(sets.discord_show),
-        discord_name: sets.discord_name || 'Join For us',
+        discord_name: sets.discord_name || 'Join For Us',
         discord_link: sets.discord_link || 'https://comingsoon&have&a&nice&day',
         devtool_show: Boolean(sets.devtool_show),
         devtool_name: sets.devtool_name || 'Community',
@@ -59,8 +60,13 @@ export default function LandingPage() {
     }
     setIsSettingsLoaded(true);
 
-    // 3. Fetch Scripts Collection
-    const { data: scriptsData } = await supabase.from('scripts').select('*').order('created_at', { ascending: false });
+    // 3. Fetch Scripts Collection (HANYA AMBIL YANG TIDAK DI-ARCHIVE)
+    const { data: scriptsData } = await supabase
+      .from('scripts')
+      .select('*')
+      .or('is_archived.eq.false,is_archived.is.null')
+      .order('created_at', { ascending: false });
+      
     if (scriptsData) setScripts(scriptsData);
 
     // 4. Fetch Public Threads Messages
@@ -68,21 +74,36 @@ export default function LandingPage() {
     if (msgData) setMessages(msgData);
   }
 
-  const fetchThumbnails = async () => {
+  // Fetch Thumbnail & Auto-Detect Developer name dari Roblox
+  const fetchRobloxGameData = async () => {
     const placeIds = scripts.map(s => s.place_id).filter(Boolean);
     if (placeIds.length === 0) return;
 
+    // Fetch Icon
     try {
-      const res = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
-      const data = await res.json();
-      if (data && data.data) {
-        const map = {};
-        data.data.forEach(item => { map[item.targetId] = item.imageUrl; });
-        setThumbnails(map);
+      const resIcon = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
+      const dataIcon = await resIcon.json();
+      if (dataIcon && dataIcon.data) {
+        const mapIcon = {};
+        dataIcon.data.forEach(item => { mapIcon[item.targetId] = item.imageUrl; });
+        setThumbnails(mapIcon);
       }
-    } catch (e) {
-      console.error('Thumbnail fetch error:', e);
-    }
+    } catch (e) { console.error('Thumbnail fetch error:', e); }
+
+    // Fetch Game Details & Developer Name
+    try {
+      const resDetails = await fetch(`https://games.roproxy.com/v1/games/multiget-place-details?placeIds=${placeIds.join(',')}`);
+      const dataDetails = await resDetails.json();
+      if (Array.isArray(dataDetails)) {
+        const mapDev = {};
+        dataDetails.forEach(item => {
+          if (item.builder) {
+            mapDev[item.placeId] = item.builder;
+          }
+        });
+        setDevelopers(mapDev);
+      }
+    } catch (e) { console.error('Game details fetch error:', e); }
   };
 
   const copyMain = async () => {
@@ -90,7 +111,6 @@ export default function LandingPage() {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
 
-    // Increment total executions hanya saat tombol Salin Script diklik
     await supabase.rpc('increment_executions', { amount: 1 });
     setTotalExec(prev => prev + 1);
   };
@@ -185,37 +205,55 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {scripts.map((s) => (
-              <div 
-                key={s.id} 
-                className="cling-effect bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-14 h-14 rounded-xl border border-white/10 overflow-hidden bg-black/40 flex-shrink-0">
-                      <img 
-                        src={thumbnails[s.place_id] || "/logo.png"} 
-                        onError={(e) => { e.target.src = "/logo.png"; }}
-                        className="w-full h-full object-cover" 
-                        alt={s.title} 
-                      />
+            {scripts.map((s) => {
+              // Priority: Manual Developer Name > Auto Detected Developer Name > Default
+              const devName = s.developer_name || developers[s.place_id] || 'Roblox Creator';
+              const isVerified = s.is_verified !== false; // Default true
+
+              return (
+                <div 
+                  key={s.id} 
+                  className="cling-effect bg-zinc-900/40 border border-white/10 hover:border-white/30 rounded-2xl p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-14 h-14 rounded-xl border border-white/10 overflow-hidden bg-black/40 flex-shrink-0">
+                        <img 
+                          src={thumbnails[s.place_id] || "/logo.png"} 
+                          onError={(e) => { e.target.src = "/logo.png"; }}
+                          className="w-full h-full object-cover" 
+                          alt={s.title} 
+                        />
+                      </div>
+                      <span className={`font-orbitron text-[10px] font-bold px-3 py-1 rounded-full border uppercase ${s.status === 'ACTIVE' ? 'bg-white/10 text-white border-white/20' : 'bg-black/50 text-zinc-500 border-white/10'}`}>
+                        {s.status}
+                      </span>
                     </div>
-                    <span className={`font-orbitron text-[10px] font-bold px-3 py-1 rounded-full border uppercase ${s.status === 'DISABLED' ? 'bg-black/50 text-zinc-400 border-white/10' : 'bg-white/10 text-white border-white/20'}`}>
-                      {s.status}
-                    </span>
+
+                    <h3 className="text-xl font-bold text-white mb-1 flex items-center justify-between">
+                      {s.title}
+                      <Sparkles className="w-4 h-4 opacity-0 group-hover:opacity-100 text-amber-300 transition" />
+                    </h3>
+
+                    {/* Developer Name & Verified Badge */}
+                    <div className="flex items-center gap-1.5 mb-3 text-xs text-zinc-400 font-mono">
+                      <span>{devName}</span>
+                      {isVerified && (
+                        <svg className="w-3.5 h-3.5 text-blue-500 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-zinc-400 leading-relaxed mb-6">{s.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-between">
-                    {s.title}
-                    <Sparkles className="w-4 h-4 opacity-0 group-hover:opacity-100 text-amber-300 transition" />
-                  </h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed mb-6">{s.description}</p>
+                  <div className="flex justify-between items-center pt-4 border-t border-dashed border-white/10 font-mono text-xs">
+                    <span className="text-white">⚡ {formatCount(s.executions)} Executions</span>
+                    <span className="text-zinc-500">{s.version || 'v1.0.0'}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center pt-4 border-t border-dashed border-white/10 font-mono text-xs">
-                  <span className="text-white">⚡ {formatCount(s.executions)} Executions</span>
-                  <span className="text-zinc-500">{s.version || 'v1.0.0'}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -224,7 +262,7 @@ export default function LandingPage() {
           <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
             {settings.devtool_show && (
               <div className="w-full text-center">
-                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">~ Tools</p>
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Tools untuk developer</p>
                 <a href={settings.devtool_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
                   {settings.devtool_name} <ExternalLink className="w-3.5 h-3.5" />
                 </a>
@@ -233,7 +271,7 @@ export default function LandingPage() {
 
             {settings.donate_show && (
               <div className="w-full text-center">
-                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">~ Support Developer 🙏</p>
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Suka scriptnya? Support pengembang 🙏</p>
                 <a href={settings.donate_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
                   {settings.donate_name} <ExternalLink className="w-3.5 h-3.5" />
                 </a>
@@ -269,7 +307,7 @@ export default function LandingPage() {
             <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
             <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold"><X className="w-5 h-5" /></button>
           </div>
-          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (No Name = Anonymous)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
+          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
           <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none resize-none"></textarea>
           <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
         </div>
@@ -293,7 +331,7 @@ export default function LandingPage() {
                   <p className="text-xs text-zinc-200 leading-relaxed">{m.content}</p>
                   {m.admin_reply && (
                     <div className="bg-white/10 border-l-2 border-white pl-2.5 py-1.5 mt-2 rounded-r-lg">
-                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👤 Admin</span>
+                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👑 Admin Reply</span>
                       <span className="text-xs text-zinc-300">{m.admin_reply}</span>
                     </div>
                   )}
@@ -309,4 +347,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-                              }
+        }
