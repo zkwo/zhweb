@@ -26,12 +26,14 @@ export default function AdminPanel({ onBack }) {
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [placeId, setPlaceId] = useState('');
+  const [developerName, setDeveloperName] = useState('');
+  const [isVerified, setIsVerified] = useState(true);
   const [status, setStatus] = useState('ACTIVE');
   const [executions, setExecutions] = useState(0);
   const [version, setVersion] = useState('v1.0.0');
   const [description, setDescription] = useState('');
 
-  const ADMIN_PASS = '087714745440';
+  const ADMIN_PASS = 'Robloxer1029384756';
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -93,6 +95,8 @@ export default function AdminPanel({ onBack }) {
     const payload = {
       title,
       place_id: placeId,
+      developer_name: developerName,
+      is_verified: isVerified,
       status,
       executions: parseInt(executions),
       version,
@@ -113,14 +117,22 @@ export default function AdminPanel({ onBack }) {
     setEditingId(s.id);
     setTitle(s.title);
     setPlaceId(s.place_id);
+    setDeveloperName(s.developer_name || '');
+    setIsVerified(s.is_verified !== false);
     setStatus(s.status);
     setExecutions(s.executions);
     setVersion(s.version);
     setDescription(s.description);
   };
 
+  const toggleArchive = async (s) => {
+    const nextState = !s.is_archived;
+    await supabase.from('scripts').update({ is_archived: nextState }).eq('id', s.id);
+    loadAdminData();
+  };
+
   const handleDeleteScript = async (id) => {
-    if (confirm('Hapus script ini?')) {
+    if (confirm('Hapus script ini secara permanen?')) {
       await supabase.from('scripts').delete().eq('id', id);
       loadAdminData();
     }
@@ -130,6 +142,8 @@ export default function AdminPanel({ onBack }) {
     setEditingId(null);
     setTitle('');
     setPlaceId('');
+    setDeveloperName('');
+    setIsVerified(true);
     setStatus('ACTIVE');
     setExecutions(0);
     setVersion('v1.0.0');
@@ -251,18 +265,33 @@ export default function AdminPanel({ onBack }) {
           <h2 className="font-orbitron text-sm font-bold text-white mb-4">{editingId ? 'EDIT SCRIPT' : 'TAMBAH SCRIPT'}</h2>
           <form onSubmit={handleSubmitScript} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <input type="text" placeholder="Judul" value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
-              <input type="text" placeholder="Place ID" value={placeId} onChange={(e) => setPlaceId(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              <input type="text" placeholder="Judul Game (misal: Evade)" value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              <input type="text" placeholder="Place ID (misal: 9872472334)" value={placeId} onChange={(e) => setPlaceId(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              
+              {/* Status Selector Include MAINTENANCE */}
               <select value={status} onChange={(e) => setStatus(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="DISABLED">DISABLED</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
               </select>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <input type="number" placeholder="Executions" value={executions} onChange={(e) => setExecutions(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
-              <input type="text" placeholder="Versi" value={version} onChange={(e) => setVersion(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
-              <input type="text" placeholder="Deskripsi" value={description} onChange={(e) => setDescription(e.target.value)} required className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              <input type="text" placeholder="Nama Developer/Group (opsional)" value={developerName} onChange={(e) => setDeveloperName(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              <div className="flex items-center gap-2 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3">
+                <label className="text-xs text-zinc-300 font-mono flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={isVerified} onChange={(e) => setIsVerified(e.target.checked)} className="w-4 h-4 accent-blue-500" />
+                  Verified Badge (Centang Biru)
+                </label>
+              </div>
+              <input type="number" placeholder="Executions Card Ini" value={executions} onChange={(e) => setExecutions(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <input type="text" placeholder="Versi (misal: v1.0.0)" value={version} onChange={(e) => setVersion(e.target.value)} className="bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+              <input type="text" placeholder="Deskripsi Ringkas Script" value={description} onChange={(e) => setDescription(e.target.value)} required className="sm:col-span-2 bg-zinc-950 border border-white/10 rounded-xl p-3 text-sm text-white" />
+            </div>
+
             <div className="flex gap-3">
               <button type="submit" className="px-6 py-3 bg-emerald-500 text-black font-orbitron font-bold text-xs rounded-xl hover:bg-emerald-400 transition">SIMPAN SCRIPT</button>
               {editingId && <button type="button" onClick={resetForm} className="px-6 py-3 bg-zinc-800 text-white font-orbitron font-bold text-xs rounded-xl">BATAL</button>}
@@ -278,6 +307,7 @@ export default function AdminPanel({ onBack }) {
               <tr className="border-b border-white/10 font-mono text-xs text-zinc-400">
                 <th className="py-2">Judul</th>
                 <th className="py-2">Status</th>
+                <th className="py-2">Archive</th>
                 <th className="py-2 text-right">Aksi</th>
               </tr>
             </thead>
@@ -285,10 +315,20 @@ export default function AdminPanel({ onBack }) {
               {scripts.map((s) => (
                 <tr key={s.id} className="border-b border-white/5">
                   <td className="py-3 font-bold">{s.title}</td>
-                  <td className="py-3">{s.status}</td>
+                  <td className="py-3 font-mono text-xs">
+                    <span className={`px-2 py-0.5 rounded border ${s.status === 'ACTIVE' ? 'border-emerald-500/30 text-emerald-400' : 'border-zinc-700 text-zinc-500'}`}>
+                      {s.status}
+                    </span>
+                  </td>
+                  <td className="py-3 font-mono text-xs">
+                    {s.is_archived ? <span className="text-amber-400">[Archived]</span> : <span className="text-zinc-500">[Public]</span>}
+                  </td>
                   <td className="py-3 text-right space-x-2">
-                    <button onClick={() => handleEdit(s)} className="px-3 py-1 bg-amber-500 text-black text-xs rounded">Edit</button>
-                    <button onClick={() => handleDeleteScript(s.id)} className="px-3 py-1 bg-red-500 text-white text-xs rounded">Hapus</button>
+                    <button onClick={() => toggleArchive(s)} className={`px-3 py-1 font-bold text-xs rounded transition ${s.is_archived ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
+                      {s.is_archived ? 'Unarchive' : 'Archive'}
+                    </button>
+                    <button onClick={() => handleEdit(s)} className="px-3 py-1 bg-amber-500 text-black font-bold text-xs rounded hover:bg-amber-400">Edit</button>
+                    <button onClick={() => handleDeleteScript(s.id)} className="px-3 py-1 bg-red-500 text-white font-bold text-xs rounded hover:bg-red-600">Hapus</button>
                   </td>
                 </tr>
               ))}
@@ -316,4 +356,4 @@ export default function AdminPanel({ onBack }) {
       </div>
     </div>
   );
-      }
+        }
