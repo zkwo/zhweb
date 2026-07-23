@@ -47,14 +47,14 @@ export default function LandingPage() {
     if (sets) {
       setSettings({
         discord_show: Boolean(sets.discord_show),
-        discord_name: sets.discord_name || 'Discord',
-        discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
+        discord_name: sets.discord_name || 'Join For us',
+        discord_link: sets.discord_link || 'https://comingsoon&have&a&nice&day',
         devtool_show: Boolean(sets.devtool_show),
-        devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
-        devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
+        devtool_name: sets.devtool_name || 'Community',
+        devtool_link: sets.devtool_link || 'https://comingsoon&have&a&nice&day',
         donate_show: Boolean(sets.donate_show),
-        donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
-        donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
+        donate_name: sets.donate_name || 'Donation',
+        donate_link: sets.donate_link || 'https://comingsoon&have&a&nice&day'
       });
     }
     setIsSettingsLoaded(true);
@@ -224,7 +224,7 @@ export default function LandingPage() {
           <div className="max-w-2xl mx-auto flex flex-col gap-6 items-center py-8">
             {settings.devtool_show && (
               <div className="w-full text-center">
-                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Tools untuk developer</p>
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">~ Tools</p>
                 <a href={settings.devtool_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
                   {settings.devtool_name} <ExternalLink className="w-3.5 h-3.5" />
                 </a>
@@ -233,7 +233,7 @@ export default function LandingPage() {
 
             {settings.donate_show && (
               <div className="w-full text-center">
-                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">// Suka scriptnya? Support pengembang 🙏</p>
+                <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-3">~ Support Developer 🙏</p>
                 <a href={settings.donate_link} target="_blank" rel="noreferrer" className="cling-effect w-full max-w-xs inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold transition">
                   {settings.donate_name} <ExternalLink className="w-3.5 h-3.5" />
                 </a>
@@ -269,7 +269,7 @@ export default function LandingPage() {
             <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
             <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold"><X className="w-5 h-5" /></button>
           </div>
-          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
+          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (No Name = Anonymous)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
           <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none resize-none"></textarea>
           <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
         </div>
@@ -293,7 +293,7 @@ export default function LandingPage() {
                   <p className="text-xs text-zinc-200 leading-relaxed">{m.content}</p>
                   {m.admin_reply && (
                     <div className="bg-white/10 border-l-2 border-white pl-2.5 py-1.5 mt-2 rounded-r-lg">
-                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👑 Admin Reply</span>
+                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👤 Admin</span>
                       <span className="text-xs text-zinc-300">{m.admin_reply}</span>
                     </div>
                   )}
