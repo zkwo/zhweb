@@ -88,22 +88,38 @@ export default function AdminPanel({ onBack }) {
     alert('Global Executions berhasil disimpan!');
   };
 
-  const savePopupSettings = async () => {
+  //const savePopupSettings = async () => {
+    //const { error } = await supabase.from('popup_settings').upsert({
+      //id: 1,
+      //is_active: popup.is_active,
+      //title: popup.title,
+      //content: popup.content
+    //});
+
+   // if (!error) {
+   //   alert('Pengaturan Popup Announcement berhasil disimpan!');
+  //    loadAdminData();
+//    } else    
+  //alert('Gagal menyimpan popup: ' + error.message);
+ //   }
+//  };
+const savePopupSettings = async () => {
     const { error } = await supabase.from('popup_settings').upsert({
       id: 1,
       is_active: popup.is_active,
       title: popup.title,
-      content: popup.content
+      content: popup.content,
+      updated_at: new Date().toISOString() // <-- Tambahkan waktu pembaruan terbaru
     });
 
     if (!error) {
-      alert('Pengaturan Popup Announcement berhasil disimpan!');
+      alert('Pengaturan Popup Announcement berhasil disimpan & dipush ke semua pengguna!');
       loadAdminData();
     } else {
       alert('Gagal menyimpan popup: ' + error.message);
     }
   };
-
+  
   const saveSiteSettings = async () => {
     const { error } = await supabase.from('site_settings').upsert({
       id: 1,
