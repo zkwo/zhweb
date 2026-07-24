@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { MessageSquareText, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink, Bell } from 'lucide-react';
+import { MessageSquareText, MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink, Bell } from 'lucide-react';
 
 export default function LandingPage() {
   const [totalExec, setTotalExec] = useState(0);
