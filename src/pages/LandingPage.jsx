@@ -69,12 +69,19 @@ export default function LandingPage() {
     const { data: popup } = await supabase.from('popup_settings').select('*').eq('id', 1).maybeSingle();
     if (popup && popup.is_active) {
       setPopupData(popup);
-      const isHidden = localStorage.getItem('zh_hide_popup_announcement');
-      if (!isHidden) {
+      //const isHidden = localStorage.getItem('zh_hide_popup_announcement');
+      //if (!isHidden) {
+        //setShowPopupModal(true);
+      //}
+    //}
+    // Ambil timestamp terakhir yang disembunyikan oleh user dari localStorage
+      const savedHideTimestamp = localStorage.getItem('zh_hide_popup_timestamp');
+      
+      // Jika user belum pernah centang "Jangan tampilkan lagi" OR timestamp pengumuman di DB lebih baru
+      if (!savedHideTimestamp || savedHideTimestamp !== popup.updated_at) {
         setShowPopupModal(true);
       }
     }
-
     // 4. Fetch Scripts Collection (Exclude Archived)
     const { data: scriptsData } = await supabase
       .from('scripts')
@@ -117,7 +124,8 @@ export default function LandingPage() {
   };
 
   const closePopup = () => {
-    if (dontShowAgain) {
+    if (dontShowAgain && popupData) {
+      // Simpan timestamp spesifik dari pengumuman ke LocalStorage
       localStorage.setItem('zh_hide_popup_announcement', 'true');
     }
     setShowPopupModal(false);
