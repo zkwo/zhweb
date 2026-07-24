@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink, Bell } from 'lucide-react';
 
 export default function LandingPage() {
   const [totalExec, setTotalExec] = useState(0);
@@ -10,16 +10,21 @@ export default function LandingPage() {
   const [developers, setDevelopers] = useState({});
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   
+  // Popup Announcement State
+  const [popupData, setPopupData] = useState(null);
+  const [showPopupModal, setShowPopupModal] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   const [settings, setSettings] = useState({
     discord_show: false,
-    discord_name: 'Join For Us',
-    discord_link: 'https://comingsoon&have&a&nice&day',
+    discord_name: 'Discord',
+    discord_link: 'https://discord.gg/HB9gqZGMnT',
     devtool_show: false,
-    devtool_name: 'Community',
-    devtool_link: 'https://comingsoon&have&a&nice&day',
+    devtool_name: '🔓 Victoria Obfuscate',
+    devtool_link: 'https://luraphdeobfvictoria-6zfp.vercel.app/',
     donate_show: false,
-    donate_name: 'Donation',
-    donate_link: 'https://comingsoon&have&a&nice&day'
+    donate_name: '☕ Saweria — sazaraaa',
+    donate_link: 'https://saweria.co/sazaraaa'
   });
 
   const [fabOpen, setFabOpen] = useState(false);
@@ -39,7 +44,7 @@ export default function LandingPage() {
   }, [scripts]);
 
   async function fetchData() {
-    // 1. Fetch Total Executions
+    // 1. Fetch Global Stats
     const { data: statsData } = await supabase.from('global_stats').select('total_executions').eq('id', 1).single();
     if (statsData) setTotalExec(statsData.total_executions);
 
@@ -48,19 +53,29 @@ export default function LandingPage() {
     if (sets) {
       setSettings({
         discord_show: Boolean(sets.discord_show),
-        discord_name: sets.discord_name || 'Join For Us',
-        discord_link: sets.discord_link || 'https://comingsoon&have&a&nice&day',
+        discord_name: sets.discord_name || 'Discord',
+        discord_link: sets.discord_link || 'https://discord.gg/HB9gqZGMnT',
         devtool_show: Boolean(sets.devtool_show),
-        devtool_name: sets.devtool_name || 'Community',
-        devtool_link: sets.devtool_link || 'https://comingsoon&have&a&nice&day',
+        devtool_name: sets.devtool_name || '🔓 Victoria Obfuscate',
+        devtool_link: sets.devtool_link || 'https://luraphdeobfvictoria-6zfp.vercel.app/',
         donate_show: Boolean(sets.donate_show),
-        donate_name: sets.donate_name || 'Donation',
-        donate_link: sets.donate_link || 'https://comingsoon&have&a&nice&day'
+        donate_name: sets.donate_name || '☕ Saweria — sazaraaa',
+        donate_link: sets.donate_link || 'https://saweria.co/sazaraaa'
       });
     }
     setIsSettingsLoaded(true);
 
-    // 3. Fetch Scripts Collection (HANYA AMBIL YANG TIDAK DI-ARCHIVE)
+    // 3. Fetch Popup Announcement Data
+    const { data: popup } = await supabase.from('popup_settings').select('*').eq('id', 1).maybeSingle();
+    if (popup && popup.is_active) {
+      setPopupData(popup);
+      const isHidden = localStorage.getItem('zh_hide_popup_announcement');
+      if (!isHidden) {
+        setShowPopupModal(true);
+      }
+    }
+
+    // 4. Fetch Scripts Collection (Exclude Archived)
     const { data: scriptsData } = await supabase
       .from('scripts')
       .select('*')
@@ -69,17 +84,15 @@ export default function LandingPage() {
       
     if (scriptsData) setScripts(scriptsData);
 
-    // 4. Fetch Public Threads Messages
+    // 5. Fetch Public Threads Messages
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (msgData) setMessages(msgData);
   }
 
-  // Fetch Thumbnail & Auto-Detect Developer name dari Roblox
   const fetchRobloxGameData = async () => {
     const placeIds = scripts.map(s => s.place_id).filter(Boolean);
     if (placeIds.length === 0) return;
 
-    // Fetch Icon
     try {
       const resIcon = await fetch(`https://thumbnails.roproxy.com/v1/places/gameicons?placeIds=${placeIds.join(',')}&returnPolicy=PlaceHolder&size=150x150&format=Png`);
       const dataIcon = await resIcon.json();
@@ -90,20 +103,24 @@ export default function LandingPage() {
       }
     } catch (e) { console.error('Thumbnail fetch error:', e); }
 
-    // Fetch Game Details & Developer Name
     try {
       const resDetails = await fetch(`https://games.roproxy.com/v1/games/multiget-place-details?placeIds=${placeIds.join(',')}`);
       const dataDetails = await resDetails.json();
       if (Array.isArray(dataDetails)) {
         const mapDev = {};
         dataDetails.forEach(item => {
-          if (item.builder) {
-            mapDev[item.placeId] = item.builder;
-          }
+          if (item.builder) mapDev[item.placeId] = item.builder;
         });
         setDevelopers(mapDev);
       }
     } catch (e) { console.error('Game details fetch error:', e); }
+  };
+
+  const closePopup = () => {
+    if (dontShowAgain) {
+      localStorage.setItem('zh_hide_popup_announcement', 'true');
+    }
+    setShowPopupModal(false);
   };
 
   const copyMain = async () => {
@@ -136,6 +153,32 @@ export default function LandingPage() {
 
   const formatCount = (num) => {
     return num >= 1000 ? (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : num;
+  };
+
+  // Helper untuk mengubah URL teks biasa menjadi link berwarna otomatis
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split('\n').map((line, i) => (
+      <p key={i} className="mb-2 leading-relaxed">
+        {line.split(urlRegex).map((part, j) => {
+          if (part.match(urlRegex)) {
+            return (
+              <a 
+                key={j} 
+                href={part} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-cyan-400 font-bold underline hover:text-cyan-300 transition break-all inline-flex items-center gap-1"
+              >
+                {part} <ExternalLink className="w-3 h-3" />
+              </a>
+            );
+          }
+          return part;
+        })}
+      </p>
+    ));
   };
 
   return (
@@ -175,7 +218,7 @@ export default function LandingPage() {
             Premium Roblox scripts with Advanced Features
           </p>
 
-          {/* Loadstring Terminal Box */}
+          {/* Loadstring Box */}
           <div className="max-w-3xl mx-auto mb-16 rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl overflow-hidden shadow-2xl text-left">
             <div className="bg-black/40 px-6 py-3.5 border-b border-white/10 flex items-center justify-between">
               <div className="flex gap-2">
@@ -197,7 +240,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Script Collection Grid */}
+        {/* Script Cards Collection */}
         <section className="mt-4 mb-16">
           <div className="flex items-center gap-4 mb-8">
             <h2 className="font-zendots text-2xl uppercase chrome-text whitespace-nowrap">Script Collection</h2>
@@ -206,9 +249,8 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {scripts.map((s) => {
-              // Priority: Manual Developer Name > Auto Detected Developer Name > Default
               const devName = s.developer_name || developers[s.place_id] || 'Roblox Creator';
-              const isVerified = s.is_verified !== false; // Default true
+              const isVerified = s.is_verified !== false;
 
               return (
                 <div 
@@ -235,7 +277,6 @@ export default function LandingPage() {
                       <Sparkles className="w-4 h-4 opacity-0 group-hover:opacity-100 text-amber-300 transition" />
                     </h3>
 
-                    {/* Developer Name & Verified Badge */}
                     <div className="flex items-center gap-1.5 mb-3 text-xs text-zinc-400 font-mono">
                       <span>{devName}</span>
                       {isVerified && (
@@ -298,21 +339,62 @@ export default function LandingPage() {
         </button>
       </div>
 
-      {/* Modals */}
-      {activeModal && <div onClick={() => setActiveModal(null)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"></div>}
+      {/* Modals Backdrop */}
+      {(activeModal || showPopupModal) && (
+        <div onClick={() => { if (!showPopupModal) setActiveModal(null); }} className="fixed inset-0 bg-black/80 backdrop-blur-md z-50"></div>
+      )}
 
+      {/* Elegant Glassmorphism Popup Announcement Modal */}
+      {showPopupModal && popupData && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-lg bg-zinc-950/90 border border-white/20 rounded-3xl p-6 sm:p-8 z-50 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] flex flex-col animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex justify-between items-center mb-5 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2 text-amber-300 font-orbitron font-bold text-xs uppercase tracking-wider">
+              <Bell className="w-4 h-4 animate-bounce" /> Announcement
+            </div>
+            <button onClick={closePopup} className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <h3 className="font-zendots text-lg sm:text-xl text-white mb-4 leading-snug chrome-text">
+            {popupData.title}
+          </h3>
+
+          <div className="font-sans text-xs sm:text-sm text-zinc-300 space-y-2 max-h-[50vh] overflow-y-auto pr-2 mb-6">
+            {renderFormattedText(popupData.content)}
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-white/10">
+            <label className="flex items-center gap-2.5 text-xs text-zinc-400 font-mono cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                checked={dontShowAgain} 
+                onChange={(e) => setDontShowAgain(e.target.checked)} 
+                className="w-4 h-4 accent-emerald-500 rounded cursor-pointer" 
+              />
+              Jangan tampilkan lagi
+            </label>
+            <button onClick={closePopup} className="cling-effect px-6 py-2.5 bg-white text-black font-orbitron font-bold text-xs rounded-full hover:bg-zinc-200 transition">
+              TUTUP
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Send */}
       {activeModal === 'send' && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 z-50 backdrop-blur-2xl shadow-2xl">
           <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
             <h3 className="font-orbitron font-bold text-sm text-white">KIRIM PESAN KE ADMIN</h3>
             <button onClick={() => setActiveModal(null)} className="text-zinc-400 hover:text-white font-bold"><X className="w-5 h-5" /></button>
           </div>
-          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (No Name = Anonymous)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
+          <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Nama Anda (Boleh Anonim)" className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-3 focus:outline-none" />
           <textarea rows="4" value={msgContent} onChange={(e) => setMsgContent(e.target.value)} placeholder="Tulis pesan..." className="w-full bg-zinc-900 border border-white/10 text-white text-sm rounded-xl p-3 mb-4 focus:outline-none resize-none"></textarea>
           <button onClick={handleSendMessage} className="w-full py-3 bg-white text-black font-orbitron font-bold text-xs rounded-xl hover:bg-zinc-200 transition">KIRIM PESAN</button>
         </div>
       )}
 
+      {/* Modal Threads */}
       {activeModal === 'thread' && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-md bg-zinc-950 border border-white/15 rounded-2xl p-6 z-50 backdrop-blur-2xl shadow-2xl max-h-[80vh] flex flex-col">
           <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
@@ -331,7 +413,7 @@ export default function LandingPage() {
                   <p className="text-xs text-zinc-200 leading-relaxed">{m.content}</p>
                   {m.admin_reply && (
                     <div className="bg-white/10 border-l-2 border-white pl-2.5 py-1.5 mt-2 rounded-r-lg">
-                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👤 Admin</span>
+                      <span className="font-orbitron text-[10px] font-bold text-white block uppercase">👑 Admin Reply</span>
                       <span className="text-xs text-zinc-300">{m.admin_reply}</span>
                     </div>
                   )}
@@ -347,4 +429,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-        }
+      }
