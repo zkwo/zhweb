@@ -16,7 +16,7 @@ export default function App() {
     setPathname(path);
   };
 
-  if (pathname === '/admin' || pathname === '/admin/') {
+  if (pathname === '/adminzh' || pathname === '/adminzh/') {
     return <AdminPanel onBack={() => navigateTo('/')} />;
   }
 
