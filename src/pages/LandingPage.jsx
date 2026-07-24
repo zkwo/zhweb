@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { MessageSquare, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink, Bell } from 'lucide-react';
+import { MessageSquareText, Send, Sparkles, X, MessageCircle, Copy, Check, ExternalLink, Bell } from 'lucide-react';
 
 export default function LandingPage() {
   const [totalExec, setTotalExec] = useState(0);
@@ -335,7 +335,7 @@ export default function LandingPage() {
         {fabOpen && (
           <div className="flex flex-col gap-2 transition-all duration-300">
             <button onClick={() => { setActiveModal('thread'); setFabOpen(false); }} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-emerald-400" /> Public Threads
+              <MessageSquareText className="w-4 h-4 text-emerald-400" /> Public Threads
             </button>
             <button onClick={() => { setActiveModal('send'); setFabOpen(false); }} className="px-5 py-3 rounded-full border border-white/10 bg-zinc-900/90 text-white font-mono text-xs shadow-xl backdrop-blur-md hover:bg-zinc-800 transition flex items-center gap-2">
               <Send className="w-4 h-4 text-sky-400" /> Kirim Pesan
